@@ -1,8 +1,7 @@
-name: helpdesk-app
-
 services:
   # Config for Web Application
   web:
+    container_name: helpdesk
     build:
       context: .
       dockerfile: Dockerfile
@@ -10,47 +9,18 @@ services:
       # TODO: Set up HTTPS and map to port 443 instead of 80
       - "80:80"
     volumes:
-      - .:/app # Binded for live reloading during development
+      - db_data:/var/www/db
     pid: "host"
     cap_add:
       - SYS_PTRACE
-    develop:
+    restart: always # For production, auto restarts if server goes down
+    environment:
+      - DB_CONNECTION=sqlite
+      - DB_DATABASE=/var/www/db/database.sqlite
+    develop: # For hot reloading development code
       watch:
-        - action: sync
-          path: ./src
-          target: /var/www/html/src
         # Rebuild only if new packages are installed
         - action: rebuild
           path: composer.json
-    environment:
-      - DB_HOST=db
-      - DB_PASSWORD=${DB_PASSWORD}
-      # Add more fields here
-    depends_on:
-      db:
-        condition: service_healthy
-
-
-  # Config for Database
-  db:
-    image: <TBD>
-    container_name: helpdesk_database
-    environment:
-      DB_USER: <TBD>
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: <TBD>
-    ports:
-      - <TBD>
-    volumes:
-      - db_data:/data
-    healthcheck:
-      # TODO: ADD HEALTHCHECK
-      test: [<TBD based on database>]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 10s
-
 volumes:
   db_data:
-

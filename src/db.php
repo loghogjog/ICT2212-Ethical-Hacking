@@ -1,6 +1,11 @@
 <?php
-$pdo = new PDO('sqlite:' . __DIR__ . '/data/helpdesk.sqlite');
-$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+try {
+  $dbPath = getenv('DB_DATABASE') ?: '/var/www/db/database.sqlite';
+  $pdo = new PDO('sqlite:' . $dbPath);
+  $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+  echo "Connection failed: " . $e->getMessage();
+}
 $pdo->exec("
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
