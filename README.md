@@ -1,6 +1,7 @@
 # ICT2212-Ethical-Hacking
 # To ssh into the Server
 ssh -i “C:\<Directory-to-key>\ICT2212-AY26-T1-student8.pem” student8@18.117.115.161 
+
 # Setting up on VS
 1. Install Remote - SSH
 2. Ctrl + Shift + p to open command palette
@@ -13,3 +14,22 @@ Host ict2212
 5. Open command palette again and select "Remote-SSH: Connect to host" then "ict2212"
 6. When the new window opens, select linux
 7. Go to File > Open Folder and type in "/home/webuser/helpdesk" and hit Enter
+
+# Setting up git 
+(In the laptop terminal)
+1. Ensure you have git by running git --version, if not install from git-scm.com (yall shld prob have it tho)
+2. git config --global user.name "Your Name"
+3. git config --global user.email "your@email.com"
+4. Access token: In your web browser, on github.com: Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token (classic) → tick the repo checkbox → Generate → copy the token and paste it somewhere temporary (Notes app)
+5. cd ~/Desktop (where you want to keep project)
+6. git clone https://github.com/loghogjog/ICT2212-Ethical-Hacking.git
+7. cd ICT2212-Ethical-Hacking
+8. When it asks: Username = your GitHub username, Password = paste the token from Step 3 (not your GitHub login password).
+9. git config --global credential.helper store
+10. git pull                        # FIRST: get everyone's latest
+
+# --- edit your files in VS Code, save them ---
+1. git add your_file.php           # stage only the files you changed
+2. git commit -m "what you did"    # save locally
+3. git pull                        # again, in case someone pushed while you worked
+4. git push                        # send yours to GitHub
