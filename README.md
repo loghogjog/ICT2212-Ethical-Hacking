@@ -21,15 +21,15 @@ Host ict2212
 2. git config --global user.name "Your Name"
 3. git config --global user.email "your@email.com"
 4. Access token: In your web browser, on github.com: Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token (classic) → tick the repo checkbox → Generate → copy the token and paste it somewhere temporary (Notes app)
-5. cd ~/Desktop (where you want to keep project)
+5. cd ~/Desktop (or whichever folder you want to keep your project)
 6. git clone https://github.com/loghogjog/ICT2212-Ethical-Hacking.git
 7. cd ICT2212-Ethical-Hacking
-8. When it asks: Username = your GitHub username, Password = paste the token from Step 3 (not your GitHub login password).
+8. When it asks: Username = your GitHub username, Password = paste the token from Step 4 (not your GitHub login password).
 9. git config --global credential.helper store
 10. git pull                        # FIRST: get everyone's latest
 
 # --- edit your files in VS Code, save them ---
-1. git add your_file.php           # stage only the files you changed
-2. git commit -m "what you did"    # save locally
-3. git pull                        # again, in case someone pushed while you worked
+1. git add .           # stage all the files you changed at one go
+2. git commit -m "summary of what you did"    # save locally
+3. git pull                        # again, in case someone pushed while you worked. **Note you might need to resolve merge conflicts**
 4. git push                        # send yours to GitHub
