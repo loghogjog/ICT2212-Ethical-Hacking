@@ -7,20 +7,19 @@ services:
       dockerfile: Dockerfile
     ports:
       # TODO: Set up HTTPS and map to port 443 instead of 80
-      - "80:80"
+      - "80:8080"
     volumes:
       - db_data:/var/www/db
     pid: "host"
     cap_add:
       - SYS_PTRACE
-    restart: always # For production, auto restarts if server goes down
+    security_opt:
+      - apparmor:unconfined
+      - seccomp:unconfined
+        # restart: always # For production, auto restarts if server goes down
     environment:
       - DB_CONNECTION=sqlite
       - DB_DATABASE=/var/www/db/database.sqlite
-    develop: # For hot reloading development code
-      watch:
-        # Rebuild only if new packages are installed
-        - action: rebuild
-          path: composer.json
+
 volumes:
   db_data:

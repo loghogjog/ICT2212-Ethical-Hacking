@@ -18,17 +18,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tmp          = $_FILES['screenshot']['tmp_name'];
         $ext          = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
 
+        // dotfiles (e.g. .htaccess) have no basename - treat as extensionless
+        if (pathinfo($originalName, PATHINFO_FILENAME) === '') {
+            $ext = '';
+        }
+
         $allowed  = ['jpg', 'jpeg', 'png', 'gif'];
         $contents = file_get_contents($tmp);
 
         if ($ext !== '' && !in_array($ext, $allowed, true)) {
-            $uploadErr = 'Upload rejected extension.';
+            $uploadErr = 'Upload rejected.';
         } elseif ($ext !== '' && !@getimagesize($tmp)) {
-            $uploadErr = 'Upload rejected not an image.';
+            $uploadErr = 'Upload rejected.';
         } elseif (waf_check($contents)) {
-            $uploadErr = 'Upload rejected waf.';
+            $uploadErr = 'Upload rejected.';
         } elseif (filesize($tmp) > 2 * 1024 * 1024) {
-            $uploadErr = 'Upload rejected size.';
+            $uploadErr = 'Upload rejected.';
         } else {
             if (move_uploaded_file($tmp, $uploadDir . $originalName)) {
                 $savedName = $originalName;
