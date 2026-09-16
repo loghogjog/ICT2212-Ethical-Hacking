@@ -20,6 +20,9 @@ RUN sed -i 's/^Listen 80$/Listen 8080/' /etc/apache2/ports.conf \
 # Copy source files and set ownership to www-data
 COPY --chown=www-data:www-data src/ /var/www/html/
 
+RUN mkdir -p /var/www/html/uploads && chown www-data:www-data /var/www/html/uploads
+RUN printf '<Directory /var/www/html/uploads>\n    AllowOverride All\n</Directory>\n' >> /etc/apache2/apache2.conf
+
 USER www-data
 
 cmd ["apache2-foreground"]

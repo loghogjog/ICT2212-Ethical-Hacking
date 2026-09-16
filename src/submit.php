@@ -1,8 +1,10 @@
 <?php
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/waf.php';
 $u = require_login($pdo);
 
-$msg = ''; // message shown to the user after they submit
+$msg = '';
+$uploadErr = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $subject = trim($_POST['subject'] ?? '');
@@ -11,11 +13,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // --- handle the screenshot upload ---
     $savedName = '';
     if (isset($_FILES['screenshot']) && $_FILES['screenshot']['error'] === UPLOAD_ERR_OK) {
-        $uploadDir = __DIR__ . '/uploads/';
+        $uploadDir    = __DIR__ . '/uploads/';
         $originalName = basename($_FILES['screenshot']['name']);
-        $target = $uploadDir . $originalName;
-        if (move_uploaded_file($_FILES['screenshot']['tmp_name'], $target)) {
-            $savedName = $originalName;
+        $tmp          = $_FILES['screenshot']['tmp_name'];
+        $ext          = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+        $allowed  = ['jpg', 'jpeg', 'png', 'gif'];
+        $contents = file_get_contents($tmp);
+
+        if ($ext !== '' && !in_array($ext, $allowed, true)) {
+            $uploadErr = 'Upload rejected extension.';
+        } elseif ($ext !== '' && !@getimagesize($tmp)) {
+            $uploadErr = 'Upload rejected not an image.';
+        } elseif (waf_check($contents)) {
+            $uploadErr = 'Upload rejected waf.';
+        } elseif (filesize($tmp) > 2 * 1024 * 1024) {
+            $uploadErr = 'Upload rejected size.';
+        } else {
+            if (move_uploaded_file($tmp, $uploadDir . $originalName)) {
+                $savedName = $originalName;
+            }
         }
     }
 
@@ -26,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $msg = 'Ticket created. Uploaded file: '
                  . '<a href="uploads/' . rawurlencode($savedName) . '">'
                  . htmlspecialchars($savedName) . '</a>';
-        } else {
+        } elseif (!$uploadErr) {
             header('Location: index.php'); exit;
         }
     }
@@ -34,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 <!doctype html><meta charset="utf-8"><title>New ticket</title><h2>New ticket</h2>
 <?php if ($msg) echo "<p style='color:green'>$msg</p>"; ?>
+<?php if ($uploadErr) echo "<p style='color:red'>" . htmlspecialchars($uploadErr) . "</p>"; ?>
 <form method="post" enctype="multipart/form-data">
   <p><input name="subject" placeholder="Subject" style="width:100%"></p>
   <p><textarea name="body" placeholder="Describe your issue" rows="6" style="width:100%"></textarea></p>
