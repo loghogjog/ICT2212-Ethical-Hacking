@@ -10,7 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $subject = trim($_POST['subject'] ?? '');
     $body = trim($_POST['body'] ?? '');
 
-    // --- handle the screenshot upload ---
     $savedName = '';
     if (isset($_FILES['screenshot']) && $_FILES['screenshot']['error'] === UPLOAD_ERR_OK) {
         $uploadDir    = __DIR__ . '/uploads/';
@@ -18,7 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tmp          = $_FILES['screenshot']['tmp_name'];
         $ext          = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
 
-        // dotfiles (e.g. .htaccess) have no basename - treat as extensionless
         if (pathinfo($originalName, PATHINFO_FILENAME) === '') {
             $ext = '';
         }
@@ -45,22 +43,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $s = $pdo->prepare('INSERT INTO tickets (user_id, subject, body) VALUES (?, ?, ?)');
         $s->execute([$u['id'], $subject, $body]);
         if ($savedName) {
-            $msg = 'Ticket created. Uploaded file: '
-                 . '<a href="uploads/' . rawurlencode($savedName) . '">'
-                 . htmlspecialchars($savedName) . '</a>';
+            $msg = 'Ticket created. Uploaded file: <a href="uploads/' . rawurlencode($savedName) . '">' . htmlspecialchars($savedName) . '</a>';
         } elseif (!$uploadErr) {
             header('Location: index.php'); exit;
         }
     }
 }
+require_once __DIR__ . '/includes/header.php';
 ?>
-<!doctype html><meta charset="utf-8"><title>New ticket</title><h2>New ticket</h2>
-<?php if ($msg) echo "<p style='color:green'>$msg</p>"; ?>
-<?php if ($uploadErr) echo "<p style='color:red'>" . htmlspecialchars($uploadErr) . "</p>"; ?>
-<form method="post" enctype="multipart/form-data">
-  <p><input name="subject" placeholder="Subject" style="width:100%"></p>
-  <p><textarea name="body" placeholder="Describe your issue" rows="6" style="width:100%"></textarea></p>
-  <p>Attach a screenshot: <input type="file" name="screenshot"></p>
-  <button>Submit</button>
-</form>
-<p><a href="index.php">Back</a></p>
+
+<section class="page-intro compact-intro">
+    <div>
+        <p class="eyebrow">SERVICE DESK / NEW REQUEST</p>
+        <h1>Submit a support ticket</h1>
+        <p class="lede">Tell us what is happening and our service desk team will route your request to the right specialist.</p>
+    </div>
+</section>
+
+<div class="form-layout">
+  <section class="card form-card">
+    <div class="card-heading"><div><p class="eyebrow">REQUEST DETAILS</p><h2>What do you need help with?</h2></div><span class="step-count">01 / 01</span></div>
+    <?php if ($msg) echo "<div class='alert-success'>$msg</div>"; ?>
+    <?php if ($uploadErr) echo "<div class='alert-error'>" . htmlspecialchars($uploadErr) . "</div>"; ?>
+    
+    <form method="post" enctype="multipart/form-data">
+        <div class="field"><label for="subject">Subject <span class="required">Required</span></label><input id="subject" type="text" name="subject" placeholder="Brief summary of the issue" required></div>
+        <div class="field"><label for="body">Description <span class="required">Required</span></label><textarea id="body" name="body" placeholder="Describe your issue in detail" rows="7" required></textarea></div>
+        <div class="field"><label for="screenshot">Attach a screenshot <span class="optional">Optional</span></label><input type="file" name="screenshot" accept=".jpg,.jpeg,.png,.gif"><span class="field-hint">Accepted formats: JPG, JPEG, PNG, GIF. Maximum size: 2 MB.</span></div>
+        <button type="submit" class="btn">Send request <span aria-hidden="true">&rarr;</span></button>
+    </form>
+  </section>
+  <aside class="help-panel"><span class="panel-kicker">NEED A QUICK ANSWER?</span><h2>Browse the support guide</h2><p>Find guidance for common access, device, and software questions before submitting a request.</p><a class="text-link" href="faq.php">View FAQs <span aria-hidden="true">&nearr;</span></a></aside>
+</div>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>
