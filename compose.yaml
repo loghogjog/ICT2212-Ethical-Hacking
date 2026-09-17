@@ -5,14 +5,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - USER_UID=${UID:-1002}
+        - USER_GID=${GID:-1002}
+    user: "${UID:-1002}:${GID:-1002}"
     ports:
       # TODO: Set up HTTPS and map to port 443 instead of 80
       - "80:8080"
     volumes:
       - db_data:/var/www/db
     pid: "host"
-    cap_add:
-      - SYS_PTRACE
     security_opt:
       - apparmor:unconfined
       - seccomp:unconfined
