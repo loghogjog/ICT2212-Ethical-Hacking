@@ -3,7 +3,7 @@ FROM php:8.2-apache
 # Build Args from compose.yaml
 ARG USER_UID=1002
 ARG USER_GID=1002
-ARG USERNAME=www-data
+ARG USERNAME=web-admin
 
 # Install SQLite extensions & clean up
 RUN apt-get update && apt-get install -y --no-install-recommends \
