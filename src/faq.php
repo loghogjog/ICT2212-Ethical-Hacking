@@ -17,6 +17,6 @@
     <article class="card"><p class="eyebrow">SERVICE</p><h2>How quickly will I receive a response?</h2><p>Urgent service interruptions are prioritised first. General requests are normally acknowledged within four business hours.</p></article>
 </section>
 
-<section class="help-panel faq-callout"><span class="panel-kicker">STILL NEED HELP?</span><h2>Our service desk is ready.</h2><p>Send us the details and we will make sure your request reaches the right team.</p><a class="btn" href="submit.php">Submit a ticket <span aria-hidden="true">&rarr;</span></a></section>
+<section class="help-panel faq-callout"><span class="panel-kicker">STILL NEED HELP?</span><h2>Our service desk is ready.</h2><p>Send us the details and we will make sure your request reaches the right team.</p><a class="btn" href="index.php">Submit a ticket <span aria-hidden="true">&rarr;</span></a></section>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

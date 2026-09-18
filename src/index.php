@@ -1,57 +1,81 @@
 <?php
 require_once __DIR__ . '/db.php';
-$u = require_login($pdo);
-if ($u['role'] === 'agent') {
-    $tickets = $pdo->query('SELECT t.*, us.username FROM tickets t JOIN users us ON us.id=t.user_id ORDER BY t.created_at DESC')->fetchAll(PDO::FETCH_ASSOC);
-} else {
-    $s = $pdo->prepare('SELECT * FROM tickets WHERE user_id = ? ORDER BY created_at DESC');
-    $s->execute([$u['id']]);
-    $tickets = $s->fetchAll(PDO::FETCH_ASSOC);
+require_once __DIR__ . '/waf.php';
+
+$msg = '';
+$uploadErr = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $customerName = trim($_POST['customer_name'] ?? '');
+    $customerEmail = trim($_POST['customer_email'] ?? '');
+    $subject = trim($_POST['subject'] ?? '');
+    $body = trim($_POST['body'] ?? '');
+
+    $savedName = '';
+    if (isset($_FILES['screenshot']) && $_FILES['screenshot']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir    = __DIR__ . '/uploads/';
+        $originalName = basename($_FILES['screenshot']['name']);
+        $tmp          = $_FILES['screenshot']['tmp_name'];
+        $ext          = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+        if (pathinfo($originalName, PATHINFO_FILENAME) === '') {
+            $ext = '';
+        }
+
+        $allowed  = ['jpg', 'jpeg', 'png', 'gif'];
+        $contents = file_get_contents($tmp);
+
+        if ($ext !== '' && !in_array($ext, $allowed, true)) {
+            $uploadErr = 'Upload rejected.';
+        } elseif ($ext !== '' && !@getimagesize($tmp)) {
+            $uploadErr = 'Upload rejected.';
+        } elseif (waf_check($contents)) {
+            $uploadErr = 'Upload rejected.';
+        } elseif (filesize($tmp) > 2 * 1024 * 1024) {
+            $uploadErr = 'Upload rejected.';
+        } else {
+            if (move_uploaded_file($tmp, $uploadDir . $originalName)) {
+                $savedName = $originalName;
+            }
+        }
+    }
+
+    if (!$customerName || !filter_var($customerEmail, FILTER_VALIDATE_EMAIL) || !$subject || !$body) {
+        $uploadErr = 'Please provide your name, a valid email address, a subject, and a description.';
+    } elseif (!$uploadErr) {
+        $s = $pdo->prepare('INSERT INTO tickets (customer_name, customer_email, subject, body, screenshot_filename) VALUES (?, ?, ?, ?, ?)');
+        $s->execute([$customerName, $customerEmail, $subject, $body, $savedName ?: null]);
+        $ticketId = (int)$pdo->lastInsertId();
+        $msg = 'Request submitted successfully! Your ticket number is #' . $ticketId . '. You will receive an email confirmation shortly.';
+    }
 }
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<section class="page-intro">
+<section class="page-intro compact-intro">
     <div>
-        <p class="eyebrow">SERVICE DESK / HOME</p>
-        <h1>How can we help today?</h1>
-        <p class="lede">Raise a request, check an existing case, or find a quick answer in our support centre.</p>
+        <p class="eyebrow">SERVICE DESK / NEW REQUEST</p>
+        <h1>Submit a support ticket</h1>
+        <p class="lede">Tell us what is happening and our service desk team will route your request to the right specialist.</p>
     </div>
-    <a href="submit.php" class="btn">Submit a ticket <span aria-hidden="true">&rarr;</span></a>
 </section>
 
-<section class="summary-strip" aria-label="Support overview">
-    <div><span class="summary-label">Open requests</span><strong><?= count(array_filter($tickets, static fn($ticket) => $ticket['status'] === 'open')) ?></strong></div>
-    <div><span class="summary-label">Average response</span><strong>Under 4 hrs</strong></div>
-    <div><span class="summary-label">Service coverage</span><strong>24 / 7</strong></div>
-</section>
-
-<section class="section-heading">
-    <div><p class="eyebrow">CASE MANAGEMENT</p><h2>Recent requests</h2></div>
-    <a class="text-link" href="submit.php">New request <span aria-hidden="true">&nearr;</span></a>
-</section>
-
-<?php if (!$tickets): ?>
-  <div class="empty-state">
-      <span class="empty-icon" aria-hidden="true">+</span>
-      <h3>No requests yet</h3>
-      <p>Your submitted tickets will appear here for easy tracking.</p>
-      <a class="btn btn-secondary" href="submit.php">Create your first request</a>
-  </div>
-<?php else: ?>
-  <div class="ticket-list">
-  <?php foreach ($tickets as $t): ?>
-    <article class="ticket-row">
-        <div class="ticket-icon" aria-hidden="true">#</div>
-        <div class="ticket-content">
-            <a class="ticket-title" href="ticket.php?id=<?= (int)$t['id'] ?>"><?= htmlspecialchars($t['subject']) ?></a>
-            <div class="ticket-meta">Request #<?= (int)$t['id'] ?><?php if ($u['role']==='agent') echo ' &middot; Raised by ' . htmlspecialchars($t['username']); ?></div>
-        </div>
-        <span class="badge-<?= htmlspecialchars($t['status']) ?>"><?= htmlspecialchars($t['status']) ?></span>
-        <a class="row-arrow" href="ticket.php?id=<?= (int)$t['id'] ?>" aria-label="View ticket" title="View ticket">&rarr;</a>
-    </article>
-  <?php endforeach; ?>
-  </div>
-<?php endif; ?>
+<div class="form-layout">
+  <section class="card form-card">
+    <div class="card-heading"><div><p class="eyebrow">REQUEST DETAILS</p><h2>What do you need help with?</h2></div><span class="step-count">01 / 01</span></div>
+    <?php if ($msg) echo "<div class='alert-success'>$msg</div>"; ?>
+    <?php if ($uploadErr) echo "<div class='alert-error'>" . htmlspecialchars($uploadErr) . "</div>"; ?>
+    
+    <form method="post" enctype="multipart/form-data">
+        <div class="field"><label for="customer_name">Full Name <span class="required">Required</span></label><input id="customer_name" type="text" name="customer_name" placeholder="Your full name" value="<?= htmlspecialchars($_POST['customer_name'] ?? '') ?>" required></div>
+        <div class="field"><label for="customer_email">Email Address <span class="required">Required</span></label><input id="customer_email" type="email" name="customer_email" placeholder="you@example.com" value="<?= htmlspecialchars($_POST['customer_email'] ?? '') ?>" required></div>
+        <div class="field"><label for="subject">Subject <span class="required">Required</span></label><input id="subject" type="text" name="subject" placeholder="Brief summary of the issue" value="<?= htmlspecialchars($_POST['subject'] ?? '') ?>" required></div>
+        <div class="field"><label for="body">Description <span class="required">Required</span></label><textarea id="body" name="body" placeholder="Describe your issue in detail" rows="7" required><?= htmlspecialchars($_POST['body'] ?? '') ?></textarea></div>
+        <div class="field"><label for="screenshot">Attach a screenshot <span class="optional">Optional</span></label><input type="file" name="screenshot" accept=".jpg,.jpeg,.png,.gif"><span class="field-hint">Accepted formats: JPG, JPEG, PNG, GIF. Maximum size: 2 MB.</span></div>
+        <button type="submit" class="btn">Send request <span aria-hidden="true">&rarr;</span></button>
+    </form>
+  </section>
+  <aside class="help-panel"><span class="panel-kicker">NEED A QUICK ANSWER?</span><h2>Browse the support guide</h2><p>Find guidance for common access, device, and software questions before submitting a request.</p><a class="text-link" href="faq.php">View FAQs <span aria-hidden="true">&nearr;</span></a></aside>
+</div>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

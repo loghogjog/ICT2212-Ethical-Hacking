@@ -22,6 +22,8 @@ services:
     environment:
       - DB_CONNECTION=sqlite
       - DB_DATABASE=/var/www/db/database.sqlite
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
 
 volumes:
   db_data:

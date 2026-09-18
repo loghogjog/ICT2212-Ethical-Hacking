@@ -10,14 +10,21 @@
 <body>
   <nav class="navbar">
     <div class="nav-inner">
-      <a class="brand" href="index.php"><span class="brand-mark">N</span><span>Northstar <strong>IT</strong></span></a>
-      <div class="nav-links">
-        <a href="index.php">Home</a>
-        <a href="submit.php">Submit Ticket</a>
-        <a href="ticket.php">View Tickets</a>
-        <a href="faq.php">FAQ</a>
-        <a href="contact.php">Contact</a>
-      </div>
+      <?php if (isset($_SESSION['admin_id'])): ?>
+        <a class="brand" href="admin_dashboard.php"><span class="brand-mark">N</span><span>Northstar <strong>IT</strong></span></a>
+        <div class="nav-links">
+          <a href="admin_dashboard.php">Dashboard</a>
+          <a href="admin_logout.php">Sign out</a>
+        </div>
+      <?php else: ?>
+        <a class="brand" href="index.php"><span class="brand-mark">N</span><span>Northstar <strong>IT</strong></span></a>
+        <div class="nav-links">
+          <a href="index.php">Submit Ticket</a>
+          <a href="faq.php">FAQ</a>
+          <a href="contact.php">Contact</a>
+          <a href="admin_login.php">Admin</a>
+        </div>
+      <?php endif; ?>
     </div>
   </nav>
   <main class="container">

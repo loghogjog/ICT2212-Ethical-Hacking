@@ -1,4 +1,17 @@
 # ICT2212-Ethical-Hacking
+
+## Local admin setup
+
+Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in the environment before starting Docker Compose. On startup, the values create the administrator account if it does not already exist:
+
+```powershell
+$env:ADMIN_USERNAME = "helpdesk-admin"
+$env:ADMIN_PASSWORD = "use-a-local-secret"
+docker compose up -d --build
+```
+
+Public customers submit requests through `submit.php`; staff use `admin_login.php` to access the secured admin console.
+
 # To ssh into the Server
 ssh -i “C:\<Directory-to-key>\ICT2212-AY26-T1-student8.pem” student8@18.117.115.161 
 
