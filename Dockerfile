@@ -18,6 +18,8 @@ RUN groupadd --gid $USER_GID $USERNAME \
 # Directory for SQLite database
 RUN mkdir -p /var/www/db && chown -R $USERNAME:$USERNAME /var/www/db
 
+COPY --chown=$USERNAME:$USERNAME database/database.sqlite /var/www/db/database.sqlite
+
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
