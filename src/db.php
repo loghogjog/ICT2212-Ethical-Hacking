@@ -1,7 +1,7 @@
 <?php
 try {
-  $dbPath = getenv('DB_DATABASE') ?: '/var/www/db/database.sqlite';
-  $pdo = new PDO('sqlite:' . $dbPath);
+  $db_path = getenv('DB_DATABASE') ?: '/var/www/db/database.sqlite';
+  $pdo = new PDO('sqlite:' . $db_path);
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
   die('Database connection failed.');
