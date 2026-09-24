@@ -22,7 +22,6 @@
           <a href="index.php">Submit Ticket</a>
           <a href="faq.php">FAQ</a>
           <a href="contact.php">Contact</a>
-          <a href="admin_login.php">Admin</a>
         </div>
       <?php endif; ?>
     </div>
