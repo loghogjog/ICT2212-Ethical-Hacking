@@ -16,9 +16,9 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
 
 # Directory for SQLite database
-RUN mkdir -p /var/www/db && chown -R $USERNAME:$USERNAME /var/www/db
+RUN mkdir -p /var/www/db && chown -R $USERNAME:$USERNAME /var/www/db && chmod 775 /var/www/db
 
-COPY --chown=$USERNAME:$USERNAME database/database.sqlite /var/www/db/database.sqlite
+##COPY --chown=$USERNAME:$USERNAME database/database.sqlite /var/www/db/database.sqlite
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
