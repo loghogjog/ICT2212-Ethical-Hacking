@@ -10,20 +10,25 @@ services:
         - USER_GID=${GID:-1002}
     user: "${UID:-1002}:${GID:-1002}"
     ports:
-      # TODO: Set up HTTPS and map to port 443 instead of 80
-      - "80:8080"
+      - "443:8443"
     volumes:
       - db_data:/var/www/db
     pid: "host"
+    cap_drop:
+      - ALL
     security_opt:
       - apparmor:unconfined
       - seccomp:unconfined
-        # restart: always # For production, auto restarts if server goes down
     environment:
       - DB_CONNECTION=sqlite
       - DB_DATABASE=/var/www/db/database.sqlite
-      - ADMIN_USERNAME=${ADMIN_USERNAME}
-      - ADMIN_PASSWORD=***
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
 
 volumes:
   db_data:
