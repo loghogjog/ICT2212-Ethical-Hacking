@@ -20,6 +20,8 @@ ARG USERNAME=web-admin
 
 WORKDIR /var/www/html
 
+USER $USERNAME
+
 # Install SQLite dependencies/extensions
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -85,4 +87,3 @@ Header always set Referrer-Policy "no-referrer-when-downgrade"\n' \
 COPY --chown="$USERNAME:$USERNAME" entry.flag /home/$USERNAME/entry.flag
 RUN chmod 444 /home/$USERNAME/entry.flag
 
-USER $USERNAME
