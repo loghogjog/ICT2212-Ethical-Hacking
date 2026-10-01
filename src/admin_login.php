@@ -27,7 +27,7 @@ require_once __DIR__ . '/includes/header.php';
 
 <section class="page-intro compact-intro">
     <div>
-        <p class="eyebrow">NORTHSTAR IT / STAFF ACCESS</p>
+        <p class="eyebrow">HELPDESK / STAFF ACCESS</p>
         <h1>Administrator sign in</h1>
         <p class="lede">Access the secure service desk workspace to review and manage customer requests.</p>
     </div>

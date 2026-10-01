@@ -2,7 +2,7 @@
   <footer class="site-footer">
     <div class="footer-inner">
       <div>
-        <a class="footer-brand" href="index.php">Northstar IT</a>
+        <a class="footer-brand" href="index.php">Helpdesk</a>
         <p>Reliable technology support for every workday.</p>
       </div>
       <div class="footer-links">
@@ -11,7 +11,7 @@
         <a href="index.php">System status</a>
       </div>
     </div>
-    <p class="copyright">&copy; <?= date('Y') ?> Northstar Digital Services. All rights reserved.</p>
+    <p class="copyright">&copy; <?= date('Y') ?> Helpdesk. All rights reserved.</p>
   </footer>
 </body>
 </html>
