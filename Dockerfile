@@ -20,8 +20,6 @@ ARG USERNAME=web-admin
 
 WORKDIR /var/www/html
 
-USER $USERNAME
-
 # Install SQLite dependencies/extensions
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -72,6 +70,8 @@ RUN mkdir -p /etc/apache2/ssl \
 RUN sed -i 's/Listen 443/Listen 8443/' /etc/apache2/ports.conf
 
 COPY ssl.conf /etc/apache2/sites-available/default-ssl.conf
+RUN chmod 644 /etc/apache2/sites-available/default-ssl.conf
+
 RUN a2ensite default-ssl
 
 # Security headers / banner reduction
@@ -87,3 +87,4 @@ Header always set Referrer-Policy "no-referrer-when-downgrade"\n' \
 COPY --chown="$USERNAME:$USERNAME" entry.flag /home/$USERNAME/entry.flag
 RUN chmod 444 /home/$USERNAME/entry.flag
 
+USER $USERNAME
