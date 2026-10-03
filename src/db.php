@@ -25,7 +25,13 @@ CREATE TABLE IF NOT EXISTS replies (
   ticket_id INTEGER NOT NULL,
   admin_id INTEGER,
   body TEXT NOT NULL,
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP);");
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS rate_limits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ip TEXT NOT NULL,
+  action TEXT NOT NULL,
+  created_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_rate_limits ON rate_limits (ip, action, created_at);");
 
 $ticketColumns = $pdo->query('PRAGMA table_info(tickets)')->fetchAll(PDO::FETCH_COLUMN, 1);
 if (in_array('user_id', $ticketColumns, true) && !in_array('customer_name', $ticketColumns, true)) {

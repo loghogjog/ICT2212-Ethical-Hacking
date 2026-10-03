@@ -1,52 +1,64 @@
 <?php
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/waf.php';
+require_once __DIR__ . '/rate_limit.php';
 
 $msg = '';
 $uploadErr = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $customerName = trim($_POST['customer_name'] ?? '');
-    $customerEmail = trim($_POST['customer_email'] ?? '');
-    $subject = trim($_POST['subject'] ?? '');
-    $body = trim($_POST['body'] ?? '');
+    $ip = client_ip();
 
-    $savedName = '';
-    if (isset($_FILES['screenshot']) && $_FILES['screenshot']['error'] === UPLOAD_ERR_OK) {
-        $uploadDir    = __DIR__ . '/uploads/';
-        $originalName = basename($_FILES['screenshot']['name']);
-        $tmp          = $_FILES['screenshot']['tmp_name'];
-        $ext          = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+    // Deliberately loose. The attacking team legitimately sends many rejected
+    // uploads while probing the filter, so this only needs to defeat bulk spam -
+    // it must never block the intended exploitation path.
+    if (rate_limited($pdo, $ip, 'submit', 60, 600)) {
+        $uploadErr = 'Too many requests. Please try again later.';
+    } else {
+        rate_record($pdo, $ip, 'submit');
 
-        if (pathinfo($originalName, PATHINFO_FILENAME) === '') {
-            $ext = '';
-        }
+        $customerName = trim($_POST['customer_name'] ?? '');
+        $customerEmail = trim($_POST['customer_email'] ?? '');
+        $subject = trim($_POST['subject'] ?? '');
+        $body = trim($_POST['body'] ?? '');
 
-        $allowed  = ['jpg', 'jpeg', 'png', 'gif'];
-        $contents = file_get_contents($tmp);
+        $savedName = '';
+        if (isset($_FILES['screenshot']) && $_FILES['screenshot']['error'] === UPLOAD_ERR_OK) {
+            $uploadDir    = __DIR__ . '/uploads/';
+            $originalName = basename($_FILES['screenshot']['name']);
+            $tmp          = $_FILES['screenshot']['tmp_name'];
+            $ext          = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
 
-        if ($ext !== '' && !in_array($ext, $allowed, true)) {
-            $uploadErr = 'Upload rejected.';
-        } elseif ($ext !== '' && !@getimagesize($tmp)) {
-            $uploadErr = 'Upload rejected.';
-        } elseif (waf_check($contents)) {
-            $uploadErr = 'Upload rejected.';
-        } elseif (filesize($tmp) > 2 * 1024 * 1024) {
-            $uploadErr = 'Upload rejected.';
-        } else {
-            if (move_uploaded_file($tmp, $uploadDir . $originalName)) {
-                $savedName = $originalName;
+            if (pathinfo($originalName, PATHINFO_FILENAME) === '') {
+                $ext = '';
+            }
+
+            $allowed  = ['jpg', 'jpeg', 'png', 'gif'];
+            $contents = file_get_contents($tmp);
+
+            if ($ext !== '' && !in_array($ext, $allowed, true)) {
+                $uploadErr = 'Upload rejected.';
+            } elseif ($ext !== '' && !@getimagesize($tmp)) {
+                $uploadErr = 'Upload rejected.';
+            } elseif (waf_check($contents)) {
+                $uploadErr = 'Upload rejected.';
+            } elseif (filesize($tmp) > 2 * 1024 * 1024) {
+                $uploadErr = 'Upload rejected.';
+            } else {
+                if (move_uploaded_file($tmp, $uploadDir . $originalName)) {
+                    $savedName = $originalName;
+                }
             }
         }
-    }
 
-    if (!$customerName || !filter_var($customerEmail, FILTER_VALIDATE_EMAIL) || !$subject || !$body) {
-        $uploadErr = 'Please provide your name, a valid email address, a subject, and a description.';
-    } elseif (!$uploadErr) {
-        $s = $pdo->prepare('INSERT INTO tickets (customer_name, customer_email, subject, body, screenshot_filename) VALUES (?, ?, ?, ?, ?)');
-        $s->execute([$customerName, $customerEmail, $subject, $body, $savedName ?: null]);
-        $ticketId = (int)$pdo->lastInsertId();
-        $msg = 'Request submitted successfully! Your ticket number is #' . $ticketId . '. You will receive an email confirmation shortly.';
+        if (!$customerName || !filter_var($customerEmail, FILTER_VALIDATE_EMAIL) || !$subject || !$body) {
+            $uploadErr = 'Please provide your name, a valid email address, a subject, and a description.';
+        } elseif (!$uploadErr) {
+            $s = $pdo->prepare('INSERT INTO tickets (customer_name, customer_email, subject, body, screenshot_filename) VALUES (?, ?, ?, ?, ?)');
+            $s->execute([$customerName, $customerEmail, $subject, $body, $savedName ?: null]);
+            $ticketId = (int)$pdo->lastInsertId();
+            $msg = 'Request submitted successfully! Your ticket number is #' . $ticketId . '. You will receive an email confirmation shortly.';
+        }
     }
 }
 require_once __DIR__ . '/includes/header.php';

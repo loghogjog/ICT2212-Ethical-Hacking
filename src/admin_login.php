@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/rate_limit.php';
 
 $error = '';
 if (isset($_SESSION['admin_id'])) {
@@ -8,19 +9,30 @@ if (isset($_SESSION['admin_id'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $s = $pdo->prepare('SELECT * FROM admins WHERE username = ?');
-    $s->execute([$username]);
-    $admin = $s->fetch(PDO::FETCH_ASSOC);
+    $ip = client_ip();
 
-    if ($admin && password_verify($password, $admin['password_hash'])) {
-        session_regenerate_id(true);
-        $_SESSION['admin_id'] = $admin['id'];
-        header('Location: admin_dashboard.php');
-        exit;
+    // Five failed attempts per two minutes per source address.
+    if (rate_limited($pdo, $ip, 'login', 5, 120)) {
+        // Generic, and no attempt counter is exposed for an attacker to work
+        // against: the limiter must not become a source of information.
+        $error = 'Too many sign-in attempts. Please try again later.';
+    } else {
+        $username = trim($_POST['username'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $s = $pdo->prepare('SELECT * FROM admins WHERE username = ?');
+        $s->execute([$username]);
+        $admin = $s->fetch(PDO::FETCH_ASSOC);
+
+        if ($admin && password_verify($password, $admin['password_hash'])) {
+            rate_clear($pdo, $ip, 'login');
+            session_regenerate_id(true);
+            $_SESSION['admin_id'] = $admin['id'];
+            header('Location: admin_dashboard.php');
+            exit;
+        }
+        rate_record($pdo, $ip, 'login');
+        $error = 'The administrator username or password is incorrect.';
     }
-    $error = 'The administrator username or password is incorrect.';
 }
 require_once __DIR__ . '/includes/header.php';
 ?>
